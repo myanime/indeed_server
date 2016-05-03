@@ -10,7 +10,7 @@ loaded_counter = int([line.rstrip('\n') for line in open('./static/counter')][0]
 #loaded_counter = 1
 main_counter = loaded_counter + 1000
 loaded_date = [line.rstrip('\n') for line in open('./static/date')][0]
-
+import sys
 
 class URLScraper(scrapy.Spider):
     name = "url_scraper"
@@ -55,7 +55,8 @@ class MainScraper(scrapy.Spider):
         clean_url = clean_url.replace('?source=IND', '?')
         item['original_link_clean'] = clean_url
         item['original_link'] = unclean_url
-        
+        urlhash = (hash(unclean_url) % ((sys.maxsize + 1) * 2)) % 10000000
+        item['jobNumber'] = urlhash        
 
         try:
             original_html = response.xpath('//html').extract()
