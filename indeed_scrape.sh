@@ -6,8 +6,8 @@ date +%d-%m-%Y_%H:%M > date
 cd /home/ubuntu/indeed/static/output
 sudo python deduplicate.py
 cd /home/ubuntu/indeed/static/output/transfer
-sudo gzip V2.csv
-sudo mv ./V2.csv.gz /var/www/html/downloads
+sudo gzip V3.csv
+sudo mv ./V3.csv.gz /var/www/html/downloads
 sleep 20
 echo Starting_Scrapy
 cd /home/ubuntu/indeed/

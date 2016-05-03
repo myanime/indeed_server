@@ -7,5 +7,5 @@ deduped = toclean.drop_duplicates('original_link')
 
 df2 = pd.read_csv(myfile2)
 df3 = deduped.merge(df2, on='job_location', how='left')
-df3.to_csv('./transfer/V2.csv', float_format='%.0f')
+df3.to_csv('./transfer/V3.csv', float_format='%.0f')
 

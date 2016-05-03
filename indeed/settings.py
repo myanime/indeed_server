@@ -20,6 +20,7 @@ EXPORT_FIELDS = [
 'job_location',
 'job_description',
 'original_link',
+'original_link_clean',
 'job_company',
 'job_money_unchanged',
 'job_money',
@@ -33,11 +34,18 @@ EXPORT_FIELDS = [
 #'original_link2_telephones',
 #'original_link3_telephones',
 'image_src_link',
+'image_src_link_path',
+'image_src_link_file',
 'image_link',
 'job_date',
 'indeed_date',
 'original_plain_text',
 'original_html',
+'company_description_indeed',
+'company_revenue_indeed',
+'company_employees_indeed',
+'company_industry_indeed',
+'company_links_indeed',
 ]
 
 

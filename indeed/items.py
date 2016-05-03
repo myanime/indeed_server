@@ -9,7 +9,6 @@ import scrapy
 
 
 class IndeedItem(scrapy.Item):
-    #full_link = scrapy.Field()
     job_description = scrapy.Field()
     job_location = scrapy.Field()
     job_company = scrapy.Field()
@@ -19,6 +18,7 @@ class IndeedItem(scrapy.Item):
     image_src_link = scrapy.Field()
     job_title = scrapy.Field()
     original_link = scrapy.Field()
+    original_link_clean = scrapy.Field()
     salary_description = scrapy.Field()
     range_lower = scrapy.Field()
     range_upper = scrapy.Field()
@@ -32,10 +32,15 @@ class IndeedItem(scrapy.Item):
     job_money_unchanged = scrapy.Field()
     indeed_date = scrapy.Field()
 
+    company_description_indeed = scrapy.Field()
+    company_revenue_indeed = scrapy.Field()
+    company_employees_indeed = scrapy.Field()
+    company_industry_indeed = scrapy.Field()
+    company_links_indeed = scrapy.Field()
+
+    image_src_link_path = scrapy.Field()
+    image_src_link_file = scrapy.Field()
 
     jobNumber = scrapy.Field()
     original_plain_text = scrapy.Field()
     original_html = scrapy.Field()
-    #main_url = scrapy.Field()
-
-    #test = scrapy.Field()

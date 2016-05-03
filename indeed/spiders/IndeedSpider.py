@@ -5,6 +5,7 @@ from scrapy.selector import Selector
 from scrapy.http import HtmlResponse
 import random
 import re
+import traceback
 loaded_counter = int([line.rstrip('\n') for line in open('./static/counter')][0])
 #loaded_counter = 1
 main_counter = loaded_counter + 1000
@@ -22,24 +23,77 @@ class URLScraper(scrapy.Spider):
 class MainScraper(scrapy.Spider):
     name = "main_scraper"
     start_urls = [line.rstrip("\n") for line in open ('./static/indeedurls')]
-    #start_urls = ['https://smartjobs.qld.gov.au/jobtools/jncustomsearch.viewFullSingle?in_organid=14904&in_jncounter=221514880&in_site=Indeed']
-    #start_urls = ['http://au.indeed.com/jobs?q=&l=australia&fromage=last&sort=date']
     
-        
     def parse_original_url(self, response):
 
         item = response.meta['item']
-        item['original_link'] = response.url
-        item['original_link_telephones'] = None
-        item['original_link_emails'] = None
+        unclean_url = response.url
+        clean_url = unclean_url.replace('&utm_campaign=indeed', '')
+        clean_url = clean_url.replace('&in_site=Indeed', '')
+        clean_url = clean_url.replace('?utm_source=Indeed&utm_medium=organic&utm_campaign=Indeed', '')
+        clean_url = clean_url.replace('&utm_source=Indeed&utm_medium=organic&utm_campaign=Indeed', '')
+        clean_url = clean_url.replace('?utm_source=Indeed&utm_medium=free&utm_campaign=Indeed', '')
+        clean_url = clean_url.replace('&utm_source=Indeed', '')
+        clean_url = clean_url.replace('&utm_medium=indeedorganic', '')
+        clean_url = clean_url.replace('&jobboard=INDEED', '')
+        clean_url = clean_url.replace('&from=indeed', '')
+        clean_url = clean_url.replace('&src=indeed', '')
+        clean_url = clean_url.replace('&utm_source=Indeed&utm_campaign=MSD_Indeed', '')
+        clean_url = clean_url.replace('&in_site=Indeed', '')
+        clean_url = clean_url.replace('indeed/', '')
+        clean_url = clean_url.replace('&__jvsd=Indeed', '')
+        clean_url = clean_url.replace('&jobsource=indeedOrganic', '')
+        clean_url = clean_url.replace('&iisn=Indeed.com', '')
+        clean_url = clean_url.replace('&Codes=D_Indeed', '')
+        clean_url = clean_url.replace('&source=Indeed', '')
+        clean_url = clean_url.replace('&jobPipeline=Indeed', '')
+        clean_url = clean_url.replace('&utm_campaign=Singtel_Indeed', '')
+        clean_url = clean_url.replace('?ref=indeed.com', '?')
+        clean_url = clean_url.replace('?utm_source=indeed', '?')
+        clean_url = clean_url.replace('?source=ONL_INDEED', '?')
+        clean_url = clean_url.replace('?jobPipeline=Indeed', '?')
+        clean_url = clean_url.replace('?source=IND', '?')
+        item['original_link_clean'] = clean_url
+        item['original_link'] = unclean_url
+        
+
         try:
             original_html = response.xpath('//html').extract()
         except:
             original_html = None
         try:
-            original_plain_text = BeautifulSoup(response.xpath('//body').extract_first()).get_text()
+            soup = BeautifulSoup(response.xpath('//body').extract_first())
+            for script in soup.find_all('script'):
+                script.extract()
+            for tag in soup():
+                for attribute in ["class", "id", "name", "style"]:
+                    del tag[attribute]
+
+            paragraphs = soup.find_all('p')
+            try:
+                header_text = soup.find('h1').get_text(strip=True) + "\n" #+ soup.find('h2').get_text(strip=True) + "\n"
+            except:
+                header_text = ''
+            all_text = ''
+            for paragraph in paragraphs:
+                my_text = paragraph.get_text(strip=True)
+                all_text = my_text + "\n" + all_text 
+            original_plain_text = header_text +  all_text
+            original_plain_text = original_plain_text.replace('\r\n                    ', '\n')
         except:
-            original_plain_text = None
+            original_plain_text = traceback.print_exc()
+            print traceback.print_exc()
+
+        #Uncomment to stop html getting
+        #original_plain_text = None
+        original_html = None
+
+        
+        original_link_telephones = None
+        original_link_emails = None
+        item['original_link_telephones'] = None
+        item['original_link_emails'] = None
+
         emails = []
         telephone_numbers = []
         try:
@@ -75,9 +129,7 @@ class MainScraper(scrapy.Spider):
                 pass
         except:
             pass
-        original_plain_text = None
-        original_html = None
-        
+
         item['original_plain_text'] = original_plain_text
         item['original_html'] = original_html
         
@@ -98,7 +150,97 @@ class MainScraper(scrapy.Spider):
             image_src_link = response.css('div#cmp-header-logo img').xpath("@src").extract()
         except:
             image_src_link = None
+            
+        image_src_link_file = None
+        image_src_link_path = None
+        if image_src_link != None:
+            try:
+                image_src_link_s = str(image_src_link)
+                image_src_link_split = image_src_link_s.rsplit('/',1)
+                image_src_link_path = image_src_link_split[0].replace("[u'", "")
+                image_src_link_path = image_src_link_path.replace("[]", "")
+                image_src_link_file = image_src_link_split[1].replace("']", "")
+            except:
+                pass
+        
         item['image_src_link'] = image_src_link
+        item['image_src_link_file'] = image_src_link_file
+        item['image_src_link_path'] = image_src_link_path
+        
+        company_description_indeed = None
+        company_revenue_indeed = ""
+        company_employees_indeed = ""
+        company_industry_indeed = None
+        company_links_indeed = None
+
+        try:
+            company_description_indeed = response.css('span#cmp-short-description::text')[0].extract()
+        except:
+            company_description_indeed = None
+
+        skip_employees = False
+        x = 0
+        link_order = 0
+        while x < 4:
+            company_revenue_indeed_title = ''
+            try:
+                company_revenue_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[link_order].extract()
+            except:
+                company_revenue_indeed = None
+                break
+            re_title_text = r'Revenue'
+            if re.search(re_title_text, company_revenue_indeed_title):
+                company_revenue_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd::text')[link_order].extract()
+                re_money = r'\$'
+                if re.search(re_money, company_revenue_indeed):
+                    pass
+                else:
+                    company_revenue_indeed = None
+                    skip_employees = True
+                break
+            link_order = link_order + 1
+            company_revenue_indeed = None
+
+        x = 0
+        link_order = 0
+        if skip_employees == False:
+            while x < 4:
+                company_employees_indeed_title = ''
+                try:
+                    company_employees_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[link_order].extract()
+                except:
+                    company_employees_indeed = None
+                    break
+                re_title_text = r'Employees'
+                if re.search(re_title_text, company_employees_indeed_title):
+                    company_employees_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd::text')[link_order].extract()
+                    re_numb = r'[ABCDEFGHIJKLMNPQRSUVWXYZabcdefghijklmnpqrsuvwxzy]'
+                    if re.search(re_numb, company_employees_indeed):
+                        company_employees_indeed = None
+                    break
+                link_order = link_order + 1
+                company_employees_indeed = None
+
+        company_industry_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd ul.cmp-plain-list li a::text').extract_first()
+        try:
+            company_links_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd a').xpath('@href')[2].extract()
+        except:
+            try:
+                company_links_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd a').xpath('@href')[1].extract()
+            except:
+                pass
+        try:
+            company_employees_indeed = company_employees_indeed.replace("+", '')
+            company_employees_indeed = company_employees_indeed.replace(",", '')
+        except:
+            pass
+        
+        item['company_description_indeed'] = company_description_indeed 
+        item['company_revenue_indeed'] = company_revenue_indeed 
+        item['company_employees_indeed'] = company_employees_indeed 
+        item['company_industry_indeed'] = company_industry_indeed 
+        item['company_links_indeed'] = company_links_indeed 
+
         return item 
 
     def parse(self, response):
