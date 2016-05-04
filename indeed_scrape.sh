@@ -1,5 +1,6 @@
 #!/bin/bash
 export PATH=/usr/local/bin:$PATH
+CURRENT_FILENAME=may
 MYDATE=$(date +"%d_%m_%Y")
 cd /home/ubuntu/indeed/static/
 date >> ./runcounter
@@ -12,5 +13,5 @@ sudo mv *.* /var/www/html/downloads
 sleep 5
 echo Starting_Scrapy
 cd /home/ubuntu/indeed/
-scrapy crawl main_scraper -o /home/ubuntu/indeed/static/output/$MYDATE.csv
-echo $MYDATE > /home/ubuntu/indeed/static/output/filename
+scrapy crawl main_scraper -o /home/ubuntu/indeed/static/output/$CURRENT_FILENAME.csv
+echo $CURRENT_FILENAME > /home/ubuntu/indeed/static/output/filename

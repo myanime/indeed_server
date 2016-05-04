@@ -1,4 +1,5 @@
 import scrapy
+import time
 from indeed.items import IndeedItem
 from bs4 import BeautifulSoup
 from scrapy.selector import Selector
@@ -55,7 +56,7 @@ class MainScraper(scrapy.Spider):
         clean_url = clean_url.replace('?source=IND', '?')
         item['original_link_clean'] = clean_url
         item['original_link'] = unclean_url
-        urlhash = (hash(unclean_url) % ((sys.maxsize + 1) * 2)) % 10000000
+        urlhash = hash(unclean_url) % 10000000
         item['jobNumber'] = urlhash        
 
         try:
@@ -130,9 +131,9 @@ class MainScraper(scrapy.Spider):
                 pass
         except:
             pass
-
+        global loaded_date
         item['original_plain_text'] = original_plain_text
-        item['original_html'] = original_html
+        item['original_html'] = loaded_date
         
         image_link = item['image_link']
         try:
@@ -309,13 +310,13 @@ class MainScraper(scrapy.Spider):
             main_counter = main_counter + 1
             with open('./static/counter', 'w') as f:
                 f.write(str(main_counter))
-            item['jobNumber'] = main_counter
+            item['jobNumber'] = None
             item['job_title'] = job_title
             item['job_description'] = job_description
             item['job_location'] = job_location
             item['job_company'] = job_company
-            global loaded_date
-            item['job_date'] = loaded_date
+            days_date = time.strftime("%d_%m_%Y")
+            item['job_date'] = days_date
             item['indeed_date'] = job_date
             item['job_money'] = job_money
             item['range_upper'] = range_upper
