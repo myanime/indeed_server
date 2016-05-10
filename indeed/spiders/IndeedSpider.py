@@ -24,7 +24,7 @@ class URLScraper(scrapy.Spider):
 class MainScraper(scrapy.Spider):
     name = "main_scraper"
     start_urls = [line.rstrip("\n") for line in open ('./static/indeedurls')]
-    
+    download_delay = 1    
     def parse_original_url(self, response):
 
         item = response.meta['item']

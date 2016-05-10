@@ -50,7 +50,7 @@ EXPORT_FIELDS = [
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = 'indeed (+http://www.yourdomain.com)'
+USER_AGENT = 'compatible; Mediapartners-Google/2.1; +http://www.google.com/bot.html'
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS=32
