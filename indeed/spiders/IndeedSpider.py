@@ -118,7 +118,32 @@ class MainScraper(scrapy.Spider):
             if t3:
                 telephone_numbers.append(t3.group())
             try:    
-                item['original_link_emails'] = emails[0]
+                email = emails[0]
+                regex = r'(((?i)\.com\.au)|((?i)\.gov\.au)|((?i)\.org\.au)|((?i)\.edu\.au)|((?i)\.net\.au)|((?i)\.com)|((?i)\.gov)|((?i)\.org)((?i)\.au))'
+                try:
+                    input_email = re.split(regex, email)
+                    new_emailstr = input_email[0] + input_email[1]
+                except:
+                    new_emailstr = email
+                new_email = str(new_emailstr)
+
+                newregex = r'(^\d{4}(?i)e\.)|(^\d{4}(?i)e)|(^\d{3}(?i)e)|(^\d{3,4})|(^(at))|(^(to))|(^(email))|(^(emailing))'
+                new_test = re.findall(newregex, new_email)
+
+                if new_test:
+                    try:
+                        for i in new_test[0]:
+                            if i:
+                                result = i
+                                break
+                        if new_email.startswith(result):
+                            return_email = new_email[len(result):]
+                    except:
+                        return_email = new_email
+                else:
+                    return_email = new_email
+                item['original_link_emails'] = return_email
+
                 #item['original_link_emails2'] = emails[1]
                 #item['original_link_emails3'] = emails[2]
             except:
