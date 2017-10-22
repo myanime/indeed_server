@@ -13,7 +13,7 @@ scrapy crawl selenium_scraper -o /home/media/indeed/static/output/$CURRENT_FILEN
 echo $CURRENT_FILENAME > /home/media/indeed/static/output/filename
 sleep 10
 cd /home/media/indeed/static/output
-sudo python deduplicate.py
+python deduplicate.py
 cd /home/media/indeed/static/output/transfer
 #sudo gzip *.*
 #mv *.* /home/media/countries/au/
