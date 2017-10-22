@@ -11,6 +11,6 @@ toclean = pd.read_csv(myfile1, names = ['jobNumber','job_title','job_location','
 deduped = toclean.drop_duplicates('original_link')
 df2 = pd.read_csv(myfile2)
 df3 = deduped.merge(df2, on='job_location', how='left')
-df3 = df3.sort('job_date')
+# df3 = df3.sort('job_date')
 df3 = df3[df3['job_date'] == todays_date]
-df3.to_csv('./transfer/V3_' +todays_date + ".csv", float_format='%.0f')
+df3.to_csv('./transfer/V3_' +todays_date + ".csv", float_format='%.0f', index = False)
