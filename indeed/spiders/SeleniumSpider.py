@@ -313,7 +313,7 @@ class MainScraper(scrapy.Spider):
                     job_title = add.find_element_by_xpath('h2').text
                     job_description = add.find_element_by_css_selector('span.summary').text.replace('\n', '')
                     job_location = add.find_element_by_css_selector('span.location').text
-                    job_date = add.find_element_by_css_selector('span.location').text
+                    job_date = add.find_element_by_css_selector('span.date').text
                     job_company = add.find_element_by_css_selector('span.company').text
                     money = add.find_elements_by_css_selector('span.no-wrap')
                     job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)

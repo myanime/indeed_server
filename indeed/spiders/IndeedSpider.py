@@ -82,6 +82,7 @@ class MainScraper(scrapy.Spider):
                 all_text = my_text + "\n" + all_text 
             original_plain_text = header_text +  all_text
             original_plain_text = original_plain_text.replace('\r\n                    ', '\n')
+            original_plain_text = original_plain_text.rstrip('\r')
         except:
             original_plain_text = traceback.print_exc()
             print traceback.print_exc()
