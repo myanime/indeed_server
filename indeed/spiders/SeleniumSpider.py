@@ -309,19 +309,25 @@ class MainScraper(scrapy.Spider):
                         return job_money, range_lower, range_upper, salary_description, job_money_unchanged
 
                     add = add.find_element_by_xpath('..')
+                    image_link = None
+                    job_company = None
 
                     job_title = add.find_element_by_xpath('h2').text
                     job_description = add.find_element_by_css_selector('span.summary').text.replace('\n', '')
                     job_location = add.find_element_by_css_selector('span.location').text
                     job_date = add.find_element_by_css_selector('span.date').text
                     try:
-                        job_company = add.find_element_by_css_selector('span.company').text
-                    except NoSuchElementException:
-                        pass
+                        company_element = add.find_element_by_css_selector('span.company')
+                        job_company = company_element.text
+                        image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
+                    except:
+                        problem = traceback.format_exc()
+                        with open('./static/errors.txt', 'a') as f:
+                            f.write("##########COMPANY ERROR###############")
+                            f.write(problem)
                     money = add.find_elements_by_css_selector('span.no-wrap')
                     job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)
 
-                    image_link = None
                     full_link = add.find_element_by_xpath('h2/a').get_attribute('href')
 
                     item = IndeedItem()
