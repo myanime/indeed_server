@@ -15,7 +15,7 @@ loaded_date = [line.rstrip('\n') for line in open('./static/date')][0]
 class MainScraper(scrapy.Spider):
     name = "selenium_scraper"
     start_urls = ['http://www.google.com']
-    download_delay = 1
+    # download_delay = 1
 
     def parse_original_url(self, response):
 
@@ -314,7 +314,10 @@ class MainScraper(scrapy.Spider):
                     job_description = add.find_element_by_css_selector('span.summary').text.replace('\n', '')
                     job_location = add.find_element_by_css_selector('span.location').text
                     job_date = add.find_element_by_css_selector('span.date').text
-                    job_company = add.find_element_by_css_selector('span.company').text
+                    try:
+                        job_company = add.find_element_by_css_selector('span.company').text
+                    except NoSuchElementException:
+                        pass
                     money = add.find_elements_by_css_selector('span.no-wrap')
                     job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)
 
