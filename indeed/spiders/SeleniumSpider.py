@@ -48,8 +48,8 @@ class MainScraper(scrapy.Spider):
         clean_url = clean_url.replace('?source=IND', '?')
         item['original_link_clean'] = clean_url
         item['original_link'] = unclean_url
-        urlhash = hashlib.md5(unclean_url)
-        item['jobNumber'] = urlhash.hexdigest()
+        urlhash = int(hashlib.sha1(unclean_url).hexdigest(), 16) % (10 ** 8)
+        item['jobNumber'] = urlhash
 
         try:
             original_html = response.xpath('//html').extract()
@@ -320,6 +320,7 @@ class MainScraper(scrapy.Spider):
                         company_element = add.find_element_by_css_selector('span.company')
                         job_company = company_element.text
                         image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
+                        image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
                     except:
                         problem = traceback.format_exc()
                         with open('./static/errors.txt', 'a') as f:
