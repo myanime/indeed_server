@@ -22,3 +22,4 @@ cd /home/$HOME_DIR/$PROJECT_DIR/static/output/transfer
 gzip *.*
 mv *.* /home/$HOME_DIR/countries/au/
 scp -i /home/$HOME_DIR/.ssh/aws_schlupfi.pem -r /home/$HOME_DIR/countries/au/* ubuntu@52.59.254.43:./countries/au
+bash
