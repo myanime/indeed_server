@@ -1,3 +1,5 @@
+from random import randint
+
 import scrapy
 import time
 from indeed.items import IndeedItem
@@ -48,13 +50,17 @@ class MainScraper(scrapy.Spider):
         clean_url = clean_url.replace('?source=IND', '?')
         item['original_link_clean'] = clean_url
         item['original_link'] = unclean_url
-        urlhash = int(hashlib.sha1(unclean_url).hexdigest(), 16) % (10 ** 8)
+        try:
+            urlhash = int(hashlib.sha1(unclean_url.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
+        except:
+            urlhash = randint(1, 10000000)
         item['jobNumber'] = urlhash
 
         try:
             original_html = response.xpath('//html').extract()
-        except:
+        except Exception as e:
             original_html = None
+            print(traceback.print_exc())
         try:
             soup = BeautifulSoup(response.xpath('//body').extract_first())
             for script in soup.find_all('script'):
@@ -75,9 +81,9 @@ class MainScraper(scrapy.Spider):
                 all_text = my_text + "\n" + all_text
             original_plain_text = header_text + all_text
             original_plain_text = original_plain_text.replace('\r\n                    ', '\n')
-        except:
+        except Exception as e:
             original_plain_text = traceback.print_exc()
-            print traceback.print_exc()
+            print(traceback.print_exc())
 
         # Uncomment to stop html getting
         # original_plain_text = None
@@ -274,8 +280,7 @@ class MainScraper(scrapy.Spider):
         for url in start_urls:
             try:
                 driver.get(url)
-                job_add = driver.find_elements_by_xpath('//h2')
-
+                job_add = driver.find_elements_by_css_selector('div.title')
                 for add in job_add:
                     def get_money(money):
                         job_money = None
@@ -312,24 +317,25 @@ class MainScraper(scrapy.Spider):
                     image_link = None
                     job_company = None
 
-                    job_title = add.find_element_by_xpath('h2').text
-                    job_description = add.find_element_by_css_selector('span.summary').text.replace('\n', '')
+                    job_title = add.find_element_by_css_selector('div.title').text
+                    job_description = add.find_element_by_css_selector('div.summary').text.replace('\n', '')
                     job_location = add.find_element_by_css_selector('span.location').text
                     job_date = add.find_element_by_css_selector('span.date').text
                     try:
                         company_element = add.find_element_by_css_selector('span.company')
                         job_company = company_element.text
                         image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
-                        image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
+                        # image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
                     except:
                         problem = traceback.format_exc()
                         with open('./static/errors.txt', 'a') as f:
                             f.write("##########COMPANY ERROR###############")
                             f.write(problem)
-                    money = add.find_elements_by_css_selector('span.no-wrap')
+
+                    money = add.find_elements_by_css_selector('div.salarySnippet > span')
                     job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)
 
-                    full_link = add.find_element_by_xpath('h2/a').get_attribute('href')
+                    full_link = add.find_element_by_css_selector('div.title').find_elements_by_css_selector('a')[0].get_attribute('href')
 
                     item = IndeedItem()
                     global main_counter
@@ -352,13 +358,27 @@ class MainScraper(scrapy.Spider):
                     item['image_link'] = image_link
                     request = scrapy.Request(full_link, callback=self.parse_original_url)
                     request.meta['item'] = item
+                    print("#########################################")
+                    print("#################JobAdd##################")
+                    print(job_title)
+                    print(job_description)
+                    print(job_location)
+                    print(job_date)
+                    print(job_money)
+                    print(range_upper)
+                    print(job_money_unchanged)
+                    print(range_lower)
+                    print(salary_description)
+                    print(image_link)
+                    print(full_link)
+                    print("#########################################")
                     yield request
             except NoSuchElementException:
-                print "#########################################"
-                print "#########################################"
-                print "##############SELENIUM ERROR#############"
-                print "#########################################"
-                print "#########################################"
+                print("#########################################")
+                print("#########################################")
+                print("##############SELENIUM ERROR#############")
+                print("#########################################")
+                print("#########################################")
                 problem = traceback.format_exc()
                 with open('./static/errors.txt', 'a') as f:
                     f.write(problem)

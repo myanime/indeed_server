@@ -3,10 +3,10 @@ from selenium import webdriver
 from lxml import etree
 import re
 
-driver = webdriver.Chrome('./chromedriver')
-driver.get('http://au.indeed.com/jobs?q=&l=australia&sort=date&fromage=last&start=30')
+driver = webdriver.Chrome('/Users/ryan/repos/indeed_server/indeed/selenium_spider/chromedriver')
+driver.get('https://au.indeed.com/jobs-in-SA')
 
-job_add = driver.find_elements_by_xpath('//h2')
+job_add = driver.find_elements_by_css_selector('div.title')
 
 for add in job_add:
     def get_money(money):
@@ -41,23 +41,26 @@ for add in job_add:
         return job_money,  range_lower, range_upper, salary_description, job_money_unchanged
 
     add = add.find_element_by_xpath('..')
+    hre=add.find_element_by_css_selector('div.title').find_elements_by_css_selector('a')[0].get_attribute('href')
 
-    job_title = add.find_element_by_xpath('h2').text
-    job_description = add.find_element_by_css_selector('span.summary').text.replace('\n', '')
+
+    job_title = add.find_element_by_css_selector('div.title').text
+    job_description = add.find_element_by_css_selector('div.summary').text.replace('\n', '')
     job_location = add.find_element_by_css_selector('span.location').text
-    job_date = add.find_element_by_css_selector('span.location').text
     job_company = add.find_element_by_css_selector('span.company').text
-    money = add.find_elements_by_css_selector('span.no-wrap')
+    money = add.find_elements_by_css_selector('div.salarySnippet > span')
+    job_date = add.find_element_by_css_selector('span.date').text
     job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)
 
     image_link = None
-    full_link = add.find_element_by_xpath('h2/a').get_attribute('href')
 
-    print full_link
-    print job_title
-    print job_description
-    print job_location
-    print job_company
-    print job_date
-    print job_money
-    print "-------------"
+    full_link = add.find_element_by_css_selector('div.title').find_element_by_xpath('a').get_attribute('href')
+
+    print(full_link)
+    print(job_title)
+    print(job_description)
+    print(job_location)
+    print(job_company)
+    print(job_date)
+    print(job_money)
+    print("-------------")
