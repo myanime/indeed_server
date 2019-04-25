@@ -1,7 +1,7 @@
 #!/bin/bash
 #PROJECT_DIR="/Users/ryan/repos/indeed_server"
 #AWS_KEY="/Users/ryan/.ssh/aws_schlupfi.pem"
-PROJECT_DIR='/home/myanime/seekscraper'
+PROJECT_DIR='/home/myanime/indeed_server'
 AWS_KEY="/home/myanime/.ssh/aws_schlupfi.pem"
 cd $PROJECT_DIR/static/
 mkdir $PROJECT_DIR/static/output/transfer/
