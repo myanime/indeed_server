@@ -1,5 +1,6 @@
 from random import randint
 
+import lxml
 import scrapy
 import time
 from indeed.items import IndeedItem
@@ -9,92 +10,63 @@ import traceback
 import hashlib
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+
 loaded_counter = int([line.rstrip('\n') for line in open('./static/counter')][0])
+import requests
 
 main_counter = loaded_counter + 1000
-loaded_date = [line.rstrip('\n') for line in open('./static/date')][0]
+
+import scrapy
+
+
+class QuotesSpider(scrapy.Spider):
+    name = "quotes"
+
+    def start_requests(self):
+        urls = [
+            'https://au.indeed.com/rc/clk?jk=6eb725be40a9575b&fccid=13953120ab571e1d&vjs=3'
+        ]
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self.parse)
+
+    def get_company_url(self, response):
+        print(response)
+        pass
+
+    def parse(self, response):
+        try:
+            indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(),
+                                        'lxml').get_text()
+        except Exception:
+            indeed_text = ''
+        try:
+            company_link_from_button = \
+                BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)[
+                    'href']
+            company_response = requests.get(company_link_from_button, timeout=4)
+            company_url = company_response.url
+            company_text = BeautifulSoup(company_response.content, "lxml").select('body')[0].get_text()
+        except:
+            company_url = ''
+            company_text = ''
+
+        print(company_url)
+        print(company_text)
+        print(indeed_text)
+
+        yield None
+
 
 class MainScraper(scrapy.Spider):
     name = "selenium_scraper"
     start_urls = ['http://www.google.com']
+
     # download_delay = 1
 
-    def parse_original_url(self, response):
 
-        item = response.meta['item']
-        unclean_url = response.url
-        clean_url = unclean_url.replace('&utm_campaign=indeed', '')
-        clean_url = clean_url.replace('&in_site=Indeed', '')
-        clean_url = clean_url.replace('?utm_source=Indeed&utm_medium=organic&utm_campaign=Indeed', '')
-        clean_url = clean_url.replace('&utm_source=Indeed&utm_medium=organic&utm_campaign=Indeed', '')
-        clean_url = clean_url.replace('?utm_source=Indeed&utm_medium=free&utm_campaign=Indeed', '')
-        clean_url = clean_url.replace('&utm_source=Indeed', '')
-        clean_url = clean_url.replace('&utm_medium=indeedorganic', '')
-        clean_url = clean_url.replace('&jobboard=INDEED', '')
-        clean_url = clean_url.replace('&from=indeed', '')
-        clean_url = clean_url.replace('&src=indeed', '')
-        clean_url = clean_url.replace('&utm_source=Indeed&utm_campaign=MSD_Indeed', '')
-        clean_url = clean_url.replace('&in_site=Indeed', '')
-        clean_url = clean_url.replace('indeed/', '')
-        clean_url = clean_url.replace('&__jvsd=Indeed', '')
-        clean_url = clean_url.replace('&jobsource=indeedOrganic', '')
-        clean_url = clean_url.replace('&iisn=Indeed.com', '')
-        clean_url = clean_url.replace('&Codes=D_Indeed', '')
-        clean_url = clean_url.replace('&source=Indeed', '')
-        clean_url = clean_url.replace('&jobPipeline=Indeed', '')
-        clean_url = clean_url.replace('&utm_campaign=Singtel_Indeed', '')
-        clean_url = clean_url.replace('?ref=indeed.com', '?')
-        clean_url = clean_url.replace('?utm_source=indeed', '?')
-        clean_url = clean_url.replace('?source=ONL_INDEED', '?')
-        clean_url = clean_url.replace('?jobPipeline=Indeed', '?')
-        clean_url = clean_url.replace('?source=IND', '?')
-        item['original_link_clean'] = clean_url
-        item['original_link'] = unclean_url
-        try:
-            urlhash = int(hashlib.sha1(unclean_url.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
-        except:
-            urlhash = randint(1, 10000000)
-        item['jobNumber'] = urlhash
-
-        try:
-            original_html = response.xpath('//html').extract()
-        except Exception as e:
-            original_html = None
-            print(traceback.print_exc())
-        try:
-            soup = BeautifulSoup(response.xpath('//body').extract_first())
-            for script in soup.find_all('script'):
-                script.extract()
-            for tag in soup():
-                for attribute in ["class", "id", "name", "style"]:
-                    del tag[attribute]
-
-            paragraphs = soup.find_all('p')
-            try:
-                header_text = soup.find('h1').get_text(
-                    strip=True) + "\n"  # + soup.find('h2').get_text(strip=True) + "\n"
-            except:
-                header_text = ''
-            all_text = ''
-            for paragraph in paragraphs:
-                my_text = paragraph.get_text(strip=True)
-                all_text = my_text + "\n" + all_text
-            original_plain_text = header_text + all_text
-            original_plain_text = original_plain_text.replace('\r\n                    ', '\n')
-        except Exception as e:
-            original_plain_text = traceback.print_exc()
-            print(traceback.print_exc())
-
-        # Uncomment to stop html getting
-        # original_plain_text = None
-        original_html = None
-
-        original_link_telephones = None
-        original_link_emails = None
-        item['original_link_telephones'] = None
-        item['original_link_emails'] = None
-
+    def get_email_and_telephone(self, text):
         emails = []
+        return_email = None
         telephone_numbers = []
         try:
             re_email = r"[a-z0-9\.\-+_]+@[a-z0-9\.\-+_]+\.[a-z]+"
@@ -102,12 +74,12 @@ class MainScraper(scrapy.Spider):
             re2 = r'(\([0-9]{2,2}\).[0-9]{3,5}.[0-9]{3,5})'
             re3 = r'\+61.[0-9]{1,1}.[0-9]{2,5}.[0-9]{2,5}.[0-9]{2,5}'
 
-            e1 = re.search(re_email, original_plain_text, re.I)
+            e1 = re.search(re_email, text, re.I)
             if e1:
                 emails.append(e1.group())
-            t1 = re.search(re1, original_plain_text, re.I)
-            t2 = re.search(re2, original_plain_text, re.I)
-            t3 = re.search(re3, original_plain_text, re.I)
+            t1 = re.search(re1, text, re.I)
+            t2 = re.search(re2, text, re.I)
+            t3 = re.search(re3, text, re.I)
             if t1:
                 telephone_numbers.append(t1.group())
             if t2:
@@ -139,34 +111,95 @@ class MainScraper(scrapy.Spider):
                         return_email = new_email
                 else:
                     return_email = new_email
-                item['original_link_emails'] = return_email
 
-                # item['original_link_emails2'] = emails[1]
-                # item['original_link_emails3'] = emails[2]
-            except:
-                pass
-            try:
-                item['original_link_telephones'] = telephone_numbers[0]
-                # item['original_link_telephones2'] = telephone_numbers[1]
-                # item['original_link_telephones3'] = telephone_numbers[2]
             except:
                 pass
         except:
             pass
-        global loaded_date
-        item['original_plain_text'] = original_plain_text
-        item['original_html'] = loaded_date
+        telephone_item = telephone_numbers[0] if telephone_numbers else None
+        return return_email, telephone_item
 
-        image_link = item['image_link']
+    def parse_original_url(self, response):
+
+        item = response.meta['item']
+        unclean_url = response.url
+        item['original_link'] = unclean_url
         try:
-            image_link = "http://au.indeed.com" + image_link
+            urlhash = int(hashlib.sha1(unclean_url.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
         except:
-            image_link = None
-            yield item
-        if image_link != None:
-            request = scrapy.Request(image_link, callback=self.parse_image_src)
+            urlhash = randint(1, 10000000)
+        item['jobNumber'] = urlhash
+
+
+        try:
+            indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml').get_text()
+        except Exception:
+            indeed_text = ''
+        try:
+            company_link_from_button = BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)['href']
+            request = scrapy.Request(company_link_from_button, callback=self.parse_original_url)
             request.meta['item'] = item
-            yield request
+
+            company_response = requests.get(company_link_from_button, timeout=4)
+            company_url = company_response.url
+            company_text = BeautifulSoup(company_response.content, "lxml").select('body')[0].get_text()
+        except:
+            company_url = ''
+            company_text = ''
+
+
+        email, phone = self.get_email_and_telephone(company_text)
+        item['original_link_telephones'] = phone
+        item['original_link_emails'] = email
+
+        item['original_plain_text'] = company_text
+        item['original_html'] = indeed_text
+        item['original_link_clean'] = company_url
+
+
+        # image_link = item['image_link']
+        # try:
+        #     image_link = "http://au.indeed.com" + image_link
+        # except:
+        #     image_link = None
+        #     yield item
+        # if image_link != None:
+        #     request = scrapy.Request(image_link, callback=self.parse_image_src)
+        #     request.meta['item'] = item
+        #     yield request
+        # else:
+        yield item
+
+    def get_money(self, money):
+        job_money = None
+        range_lower = None
+        range_upper = None
+        salary_description = None
+        job_money_unchanged = None
+        if money:
+            try:
+                job_money = money[0].text
+                job_money_unchanged = job_money
+                job_money = job_money.replace(',', '')
+                job_money = job_money.replace('$', '')
+                if re.search(r' a year', job_money):
+                    job_money = job_money.split(' a year')[0]
+                    salary_description = 'a year'
+                if re.search(r' an hour', job_money):
+                    job_money = job_money.split(' an hour')[0]
+                    salary_description = 'an hour'
+                if re.search(r' a week', job_money):
+                    job_money = job_money.split(' a week')[0]
+                    salary_description = 'a week'
+                if re.search(r' a day', job_money):
+                    job_money = job_money.split(' a day')[0]
+                    salary_description = 'a day'
+                if re.search(r'-', job_money):
+                    range_lower = job_money.split(" - ")[0]
+                    range_upper = job_money.split(" - ")[1]
+            except:
+                job_money = None
+        return job_money, range_lower, range_upper, salary_description, job_money_unchanged
 
     def parse_image_src(self, response):
         item = response.meta['item']
@@ -282,37 +315,6 @@ class MainScraper(scrapy.Spider):
                 driver.get(url)
                 job_add = driver.find_elements_by_css_selector('div.title')
                 for add in job_add:
-                    def get_money(money):
-                        job_money = None
-                        range_lower = None
-                        range_upper = None
-                        salary_description = None
-                        job_money_unchanged = None
-                        if money:
-                            try:
-                                job_money = money[0].text
-                                job_money_unchanged = job_money
-                                job_money = job_money.replace(',', '')
-                                job_money = job_money.replace('$', '')
-                                if re.search(r' a year', job_money):
-                                    job_money = job_money.split(' a year')[0]
-                                    salary_description = 'a year'
-                                if re.search(r' an hour', job_money):
-                                    job_money = job_money.split(' an hour')[0]
-                                    salary_description = 'an hour'
-                                if re.search(r' a week', job_money):
-                                    job_money = job_money.split(' a week')[0]
-                                    salary_description = 'a week'
-                                if re.search(r' a day', job_money):
-                                    job_money = job_money.split(' a day')[0]
-                                    salary_description = 'a day'
-                                if re.search(r'-', job_money):
-                                    range_lower = job_money.split(" - ")[0]
-                                    range_upper = job_money.split(" - ")[1]
-                            except:
-                                job_money = None
-                        return job_money, range_lower, range_upper, salary_description, job_money_unchanged
-
                     add = add.find_element_by_xpath('..')
                     image_link = None
                     job_company = None
@@ -333,7 +335,7 @@ class MainScraper(scrapy.Spider):
                             f.write(problem)
 
                     money = add.find_elements_by_css_selector('div.salarySnippet > span')
-                    job_money, range_lower, range_upper, salary_description, job_money_unchanged = get_money(money)
+                    job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
 
                     full_link = add.find_element_by_css_selector('div.title').find_elements_by_css_selector('a')[0].get_attribute('href')
 
