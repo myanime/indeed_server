@@ -11,10 +11,10 @@ import hashlib
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 
-loaded_counter = int([line.rstrip('\n') for line in open('./static/counter')][0])
+
 import requests
 
-main_counter = loaded_counter + 1000
+
 
 import scrapy
 
@@ -333,10 +333,6 @@ class MainScraper(scrapy.Spider):
                     full_link = add.find_element_by_css_selector('div.title').find_elements_by_css_selector('a')[0].get_attribute('href')
 
                     item = IndeedItem()
-                    global main_counter
-                    main_counter = main_counter + 1
-                    with open('./static/counter', 'w') as f:
-                        f.write(str(main_counter))
                     item['jobNumber'] = None
                     item['job_title'] = job_title
                     item['job_description'] = job_description
