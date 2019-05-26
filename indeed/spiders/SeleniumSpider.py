@@ -19,8 +19,8 @@ main_counter = loaded_counter + 1000
 import scrapy
 
 
-class QuotesSpider(scrapy.Spider):
-    name = "quotes"
+class IndeedTestSpider(scrapy.Spider):
+    name = "indeed_test"
 
     def start_requests(self):
         urls = [
@@ -28,10 +28,6 @@ class QuotesSpider(scrapy.Spider):
         ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self.parse)
-
-    def get_company_url(self, response):
-        print(response)
-        pass
 
     def parse(self, response):
         try:
@@ -60,9 +56,6 @@ class QuotesSpider(scrapy.Spider):
 class MainScraper(scrapy.Spider):
     name = "selenium_scraper"
     start_urls = ['http://www.google.com']
-
-    # download_delay = 1
-
 
     def get_email_and_telephone(self, text):
         emails = []
@@ -120,6 +113,22 @@ class MainScraper(scrapy.Spider):
         return return_email, telephone_item
 
     def parse_original_url(self, response):
+        item = response.meta['item']
+
+        company_url = response.url
+        html = response.xpath('body').extract_first()
+        company_text = BeautifulSoup(html).select('body')[0].get_text()
+
+        email, phone = self.get_email_and_telephone(company_text)
+        item['original_link_telephones'] = phone
+        item['original_link_emails'] = email
+
+        item['original_plain_text'] = company_text
+        item['original_link_clean'] = company_url
+
+        yield item
+
+    def parse_indeed_url(self, response):
 
         item = response.meta['item']
         unclean_url = response.url
@@ -135,40 +144,24 @@ class MainScraper(scrapy.Spider):
             indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml').get_text()
         except Exception:
             indeed_text = ''
+
+        item['original_html'] = indeed_text
         try:
             company_link_from_button = BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)['href']
+
             request = scrapy.Request(company_link_from_button, callback=self.parse_original_url)
             request.meta['item'] = item
+            yield request
 
-            company_response = requests.get(company_link_from_button, timeout=4)
-            company_url = company_response.url
-            company_text = BeautifulSoup(company_response.content, "lxml").select('body')[0].get_text()
+
         except:
-            company_url = ''
-            company_text = ''
+            item['original_link_telephones'] = ''
+            item['original_link_emails'] = ''
 
+            item['original_plain_text'] = ''
+            item['original_link_clean'] = ''
 
-        email, phone = self.get_email_and_telephone(company_text)
-        item['original_link_telephones'] = phone
-        item['original_link_emails'] = email
-
-        item['original_plain_text'] = company_text
-        item['original_html'] = indeed_text
-        item['original_link_clean'] = company_url
-
-
-        # image_link = item['image_link']
-        # try:
-        #     image_link = "http://au.indeed.com" + image_link
-        # except:
-        #     image_link = None
-        #     yield item
-        # if image_link != None:
-        #     request = scrapy.Request(image_link, callback=self.parse_image_src)
-        #     request.meta['item'] = item
-        #     yield request
-        # else:
-        yield item
+            yield item
 
     def get_money(self, money):
         job_money = None
@@ -358,7 +351,7 @@ class MainScraper(scrapy.Spider):
                     item['range_lower'] = range_lower
                     item['salary_description'] = salary_description
                     item['image_link'] = image_link
-                    request = scrapy.Request(full_link, callback=self.parse_original_url)
+                    request = scrapy.Request(full_link, callback=self.parse_indeed_url)
                     request.meta['item'] = item
                     print("#########################################")
                     print("#################JobAdd##################")
