@@ -123,7 +123,7 @@ class MainScraper(scrapy.Spider):
         item['original_link_telephones'] = phone
         item['original_link_emails'] = email
 
-        item['original_plain_text'] = company_text
+        item['original_plain_text'] = '' # Adding the company text takes up too much space
         item['original_link_clean'] = company_url
 
         yield item
@@ -141,8 +141,26 @@ class MainScraper(scrapy.Spider):
 
 
         try:
-            indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml').get_text()
-        except Exception:
+            indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml')
+            for script in indeed_text.find_all('script'):
+                script.extract()
+            for tag in indeed_text():
+                for attribute in ["class", "id", "name", "style"]:
+                    del tag[attribute]
+
+            paragraphs = indeed_text.find_all('p')
+            try:
+                header_text = indeed_text.find('h1').get_text(
+                    strip=True) + "\n"  # + soup.find('h2').get_text(strip=True) + "\n"
+            except:
+                header_text = ''
+            all_text = ''
+            for paragraph in paragraphs:
+                my_text = paragraph.get_text(strip=True)
+                all_text = my_text + "\n" + all_text
+            indeed_text = header_text + all_text
+            indeed_text = indeed_text.replace('\r\n                    ', '\n')
+        except Exception as e:
             indeed_text = ''
 
         item['original_html'] = indeed_text
@@ -319,13 +337,19 @@ class MainScraper(scrapy.Spider):
                     try:
                         company_element = add.find_element_by_css_selector('span.company')
                         job_company = company_element.text
-                        image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
-                        # image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
+                        try:
+                            image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
+                            # image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
+                        except:
+                            pass
                     except:
-                        problem = traceback.format_exc()
-                        with open('./static/errors.txt', 'a') as f:
-                            f.write("##########COMPANY ERROR###############")
-                            f.write(problem)
+                        #If the elements are found then it continues
+                        pass
+
+                        # problem = traceback.format_exc()
+                        # with open('./static/errors.txt', 'a') as f:
+                        #     f.write("##########COMPANY ERROR###############")
+                        #     f.write(problem)
 
                     money = add.find_elements_by_css_selector('div.salarySnippet > span')
                     job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
