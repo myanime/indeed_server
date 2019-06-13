@@ -1,61 +1,18 @@
-from random import randint
-
-import lxml
-import scrapy
-import time
-from indeed.items import IndeedItem
-from bs4 import BeautifulSoup
-import re
-import traceback
 import hashlib
-from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException
-
-
-import requests
-
-
+import re
+import time
+from random import randint
+from urllib.parse import urlsplit
 
 import scrapy
+from bs4 import BeautifulSoup
 
-
-class IndeedTestSpider(scrapy.Spider):
-    name = "indeed_test"
-
-    def start_requests(self):
-        urls = [
-            'https://au.indeed.com/rc/clk?jk=6eb725be40a9575b&fccid=13953120ab571e1d&vjs=3'
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
-
-    def parse(self, response):
-        try:
-            indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(),
-                                        'lxml').get_text()
-        except Exception:
-            indeed_text = ''
-        try:
-            company_link_from_button = \
-                BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)[
-                    'href']
-            company_response = requests.get(company_link_from_button, timeout=4)
-            company_url = company_response.url
-            company_text = BeautifulSoup(company_response.content, "lxml").select('body')[0].get_text()
-        except:
-            company_url = ''
-            company_text = ''
-
-        print(company_url)
-        print(company_text)
-        print(indeed_text)
-
-        yield None
+from indeed.items import IndeedItem
 
 
 class MainScraper(scrapy.Spider):
     name = "selenium_scraper"
-    start_urls = ['http://www.google.com']
+    start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
 
     def get_email_and_telephone(self, text):
         emails = []
@@ -123,7 +80,7 @@ class MainScraper(scrapy.Spider):
         item['original_link_telephones'] = phone
         item['original_link_emails'] = email
 
-        item['original_plain_text'] = '' # Adding the company text takes up too much space
+        item['original_plain_text'] = ''  # Adding the company text takes up too much space
         item['original_link_clean'] = company_url
 
         yield item
@@ -139,39 +96,27 @@ class MainScraper(scrapy.Spider):
             urlhash = randint(1, 10000000)
         item['jobNumber'] = urlhash
 
-
         try:
             indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml')
-            for script in indeed_text.find_all('script'):
-                script.extract()
-            for tag in indeed_text():
-                for attribute in ["class", "id", "name", "style"]:
-                    del tag[attribute]
-
-            paragraphs = indeed_text.find_all('p')
-            try:
-                header_text = indeed_text.find('h1').get_text(
-                    strip=True) + "\n"  # + soup.find('h2').get_text(strip=True) + "\n"
-            except:
-                header_text = ''
-            all_text = ''
-            for paragraph in paragraphs:
-                my_text = paragraph.get_text(strip=True)
-                all_text = my_text + "\n" + all_text
-            indeed_text = header_text + all_text
-            indeed_text = indeed_text.replace('\r\n                    ', '\n')
+            indeed_text = indeed_text.find('div', class_='jobsearch-jobDescriptionText').get_text()
         except Exception as e:
             indeed_text = ''
 
         item['original_html'] = indeed_text
+        print("*************************************************")
+        print("*************************************************")
+        print("*************************************************")
+        print(indeed_text)
+        print("*************************************************")
+        print("*************************************************")
+        print("*************************************************")
         try:
-            company_link_from_button = BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)['href']
-
+            company_link_from_button = \
+                BeautifulSoup(response.xpath('//*[@id="viewJobButtonLinkContainer"]').extract_first()).find(href=True)[
+                    'href']
             request = scrapy.Request(company_link_from_button, callback=self.parse_original_url)
             request.meta['item'] = item
             yield request
-
-
         except:
             item['original_link_telephones'] = ''
             item['original_link_emails'] = ''
@@ -319,83 +264,58 @@ class MainScraper(scrapy.Spider):
         return item
 
     def parse(self, response):
-        driver = webdriver.Chrome('./chromedriver')
-        start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
-        for url in start_urls:
-            try:
-                driver.get(url)
-                job_add = driver.find_elements_by_css_selector('div.title')
-                for add in job_add:
-                    add = add.find_element_by_xpath('..')
-                    image_link = None
-                    job_company = None
+        def RCFind(soup, element, class_=None, href=False):
+            elements = soup.find(element, class_=class_)
+            if elements:
+                if href:
+                    return elements.attrs['href']
+                return elements.get_text(strip=True)
 
-                    job_title = add.find_element_by_css_selector('div.title').text
-                    job_description = add.find_element_by_css_selector('div.summary').text.replace('\n', '')
-                    job_location = add.find_element_by_css_selector('span.location').text
-                    job_date = add.find_element_by_css_selector('span.date').text
-                    try:
-                        company_element = add.find_element_by_css_selector('span.company')
-                        job_company = company_element.text
-                        try:
-                            image_link = company_element.find_element_by_css_selector('a').get_attribute('href')
-                            # image_link = company_element.find_element_by_xpath_selector('a').get_attribute('href')
-                        except:
-                            pass
-                    except:
-                        #If the elements are found then it continues
-                        pass
+        job_add_scrapy = response.xpath('//*[@data-tn-component="organicJob"]')
+        for add in job_add_scrapy:
+            soup = BeautifulSoup(add.extract(), 'lxml')
 
-                        # problem = traceback.format_exc()
-                        # with open('./static/errors.txt', 'a') as f:
-                        #     f.write("##########COMPANY ERROR###############")
-                        #     f.write(problem)
+            title_href = RCFind(soup, 'a', class_='jobtitle', href=True)
+            base_url = urlsplit(response.url)
+            full_link = '{}://{}{}'.format(base_url.scheme, base_url.netloc, title_href)
 
-                    money = add.find_elements_by_css_selector('div.salarySnippet > span')
-                    job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
+            job_company = RCFind(soup, 'span', class_='company')
+            job_title = RCFind(soup, 'a', class_='jobtitle')
+            job_description = RCFind(soup, 'div', class_='summary')
+            job_date = RCFind(soup, 'span', class_='date')
+            job_location = RCFind(soup, 'span', class_='location')
+            money = RCFind(soup, 'span', class_='salary')
+            job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
 
-                    full_link = add.find_element_by_css_selector('div.title').find_elements_by_css_selector('a')[0].get_attribute('href')
+            item = IndeedItem()
+            item['jobNumber'] = None
+            item['job_title'] = job_title
+            item['job_description'] = job_description
+            item['job_location'] = job_location
+            item['job_company'] = job_company
+            days_date = time.strftime("%d_%m_%Y")
+            item['job_date'] = days_date
+            item['indeed_date'] = job_date
+            item['job_money'] = job_money
+            item['range_upper'] = range_upper
+            item['job_money_unchanged'] = job_money_unchanged
+            item['range_lower'] = range_lower
+            item['salary_description'] = salary_description
+            item['image_link'] = None
+            request = scrapy.Request(full_link, callback=self.parse_indeed_url)
+            request.meta['item'] = item
 
-                    item = IndeedItem()
-                    item['jobNumber'] = None
-                    item['job_title'] = job_title
-                    item['job_description'] = job_description
-                    item['job_location'] = job_location
-                    item['job_company'] = job_company
-                    days_date = time.strftime("%d_%m_%Y")
-                    item['job_date'] = days_date
-                    item['indeed_date'] = job_date
-                    item['job_money'] = job_money
-                    item['range_upper'] = range_upper
-                    item['job_money_unchanged'] = job_money_unchanged
-                    item['range_lower'] = range_lower
-                    item['salary_description'] = salary_description
-                    item['image_link'] = image_link
-                    request = scrapy.Request(full_link, callback=self.parse_indeed_url)
-                    request.meta['item'] = item
-                    print("#########################################")
-                    print("#################JobAdd##################")
-                    print(job_title)
-                    print(job_description)
-                    print(job_location)
-                    print(job_date)
-                    print(job_money)
-                    print(range_upper)
-                    print(job_money_unchanged)
-                    print(range_lower)
-                    print(salary_description)
-                    print(image_link)
-                    print(full_link)
-                    print("#########################################")
-                    yield request
-            except NoSuchElementException:
-                print("#########################################")
-                print("#########################################")
-                print("##############SELENIUM ERROR#############")
-                print("#########################################")
-                print("#########################################")
-                problem = traceback.format_exc()
-                with open('./static/errors.txt', 'a') as f:
-                    f.write(problem)
-                    f.write("################################")
-                time.sleep(2)
+            print("#########################################")
+            print("#################JobAdd##################")
+            print('job_title: ', job_title)
+            print('job_description: ', job_description)
+            print('job_location: ', job_location)
+            print('job_date: ', job_date)
+            print('job_money: ', job_money)
+            print('range_upper: ', range_upper)
+            print('job_money_unchanged: ', job_money_unchanged)
+            print('range_lower: ', range_lower)
+            print('salary_description: ', salary_description)
+            print('full_link: ', full_link)
+            print("#########################################")
+            yield request
