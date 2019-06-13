@@ -10,7 +10,7 @@ date +%d-%m-%Y_%H:%M > date
 sleep 5
 echo Starting_Scrapy
 cd $PROJECT_DIR/
-scrapy crawl selenium_scraper -o $PROJECT_DIR/static/output/may.csv
+scrapy crawl indeed_scraper -o $PROJECT_DIR/static/output/may.csv
 echo may > $PROJECT_DIR/static/output/filename
 sleep 10
 cd $PROJECT_DIR/static/output
