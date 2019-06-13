@@ -1,5 +1,5 @@
 #!/bin/bash
-PROJECT_DIR="/Users/ryan/repos/indeed_server"
+PROJECT_DIR="/Users/connect/indeed_server"
 AWS_KEY="/Users/ryan/.ssh/aws_schlupfi.pem"
 cd $PROJECT_DIR/static/
 mkdir $PROJECT_DIR/static/output/transfer/
@@ -16,6 +16,6 @@ sleep 10
 cd $PROJECT_DIR/static/output
 python deduplicate.py
 cd $PROJECT_DIR/static/output/transfer
-gzip *.*
-scp -i $AWS_KEY -r $PROJECT_DIR/static/output/transfer/* ubuntu@52.59.254.43:./countries/au
-rm $PROJECT_DIR/static/output/transfer/*
+#gzip *.*
+#scp -i $AWS_KEY -r $PROJECT_DIR/static/output/transfer/* ubuntu@52.59.254.43:./countries/au
+#rm $PROJECT_DIR/static/output/transfer/*
