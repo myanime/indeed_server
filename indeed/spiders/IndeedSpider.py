@@ -11,7 +11,7 @@ from indeed.items import IndeedItem
 
 
 class MainScraper(scrapy.Spider):
-    name = "selenium_scraper"
+    name = "indeed_scraper"
     start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
 
     def get_email_and_telephone(self, text):
