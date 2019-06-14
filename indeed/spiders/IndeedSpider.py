@@ -9,10 +9,20 @@ from bs4 import BeautifulSoup
 
 from indeed.items import IndeedItem
 
+from country_config import COUNTRY
+from generate_joblist import us_jobs, canada_jobs, singapore_jobs
+
 
 class MainScraper(scrapy.Spider):
     name = "indeed_scraper"
-    start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
+    if COUNTRY == 'au':
+        start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
+    if COUNTRY == 'usa':
+        start_urls = us_jobs()
+    if COUNTRY == 'ca':
+        start_urls = canada_jobs()
+    if COUNTRY == 'sg':
+        start_urls = singapore_jobs()
 
     def get_email_and_telephone(self, text):
         emails = []
