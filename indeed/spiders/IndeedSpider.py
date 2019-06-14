@@ -19,7 +19,7 @@ class MainScraper(scrapy.Spider):
         start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
     if COUNTRY == 'usa':
         start_urls = us_jobs()
-    if COUNTRY == 'ca':
+    if COUNTRY == 'canada':
         start_urls = canada_jobs()
     if COUNTRY == 'sg':
         start_urls = singapore_jobs()

@@ -8,8 +8,7 @@ def generate_jobs(states, base_url):
     jobs=[]
     for state in states:
           for i in range(1,101):
-                us_jobs.append('{base_url}/jobs?q=&l={state}&sort=date&fromage=last&start={i}'.format(base_url=base_url,state=state, i=i*10))
-
+                jobs.append('{base_url}/jobs?q=&l={state}&sort=date&fromage=last&start={i}'.format(base_url=base_url,state=state, i=i*10))
     return jobs
 
 def us_jobs():
@@ -18,6 +17,5 @@ def us_jobs():
 def canada_jobs():
     return generate_jobs(canadian_states, 'https://www.indeed.ca')
 
-
 def singapore_jobs():
-    return generate_jobs(singapore_states, 'https://www.indeed.sg')
+    return generate_jobs(singapore_states, 'https://www.indeed.com.sg')

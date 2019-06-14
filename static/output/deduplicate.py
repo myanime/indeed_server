@@ -10,7 +10,7 @@ if COUNTRY == 'au':
     OUTPUT_NAME = './transfer/V1au_' + todays_date + ".csv"
 if COUNTRY == 'usa':
     OUTPUT_NAME = './transfer/V1usa_' + todays_date + ".csv"
-if COUNTRY == 'ca':
+if COUNTRY == 'canada':
     OUTPUT_NAME = './transfer/V1ca_' + todays_date + ".csv"
 if COUNTRY == 'sg':
     OUTPUT_NAME = './transfer/V1sg_' + todays_date + ".csv"
