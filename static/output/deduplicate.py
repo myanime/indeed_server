@@ -1,8 +1,11 @@
+COUNTRY = 'au'
+# COUNTRY = 'sg'
+# COUNTRY = 'canada'
+# COUNTRY = 'usa'
 
 import time
 import pandas as pd
-from country_config import COUNTRY
-
+# from country_config import COUNTRY
 todays_date = time.strftime("%d_%m_%Y")
 
 OUTPUT_NAME = None

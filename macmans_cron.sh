@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+COUNTRY='au'
 echo "Poor Mans Cron"
 sleep 5
 echo "Starting"

@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 COUNTRY='au'
+#COUNTRY='sg'
+#COUNTRY='canada'
+#COUNTRY='usa'
+
 echo "Poor Mans Cron"
 sleep 5
 echo "Starting"
-gnome-terminal --command=/home/myanime/indeed_server$COUNTRY/local_indeed.sh $COUNTRY $COUNTRY --display=:0
+gnome-terminal --command=/home/myanime/indeed_server_$COUNTRY/local_indeed.sh --display=:0
 
 while true
 do
