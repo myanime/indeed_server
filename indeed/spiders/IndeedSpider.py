@@ -9,7 +9,7 @@ from bs4 import BeautifulSoup
 
 from indeed.items import IndeedItem
 
-from country_config import COUNTRY
+from static.output.country.country_config import COUNTRY
 from generate_joblist import us_jobs, canada_jobs, singapore_jobs
 
 
