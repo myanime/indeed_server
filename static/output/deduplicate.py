@@ -1,5 +1,6 @@
 import time
-from static.output.country.country_config import COUNTRY
+from country.country_config import COUNTRY
+
 todays_date = time.strftime("%d_%m_%Y")
 
 OUTPUT_NAME = None
