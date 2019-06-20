@@ -2,8 +2,8 @@
 #PROJECT_DIR="/Users/ryan/repos/indeed_server"
 #AWS_KEY="/Users/ryan/.ssh/aws_schlupfi.pem"
 #COUNTRY='au'
-#COUNTRY='sg'
-COUNTRY='canada'
+COUNTRY='sg'
+#COUNTRY='canada'
 #COUNTRY='usa'
 PROJECT_DIR='/home/myanime/indeed_server_'$COUNTRY
 AWS_KEY="/home/myanime/.ssh/aws_schlupfi.pem"
