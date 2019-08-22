@@ -144,7 +144,7 @@ class MainScraper(scrapy.Spider):
         job_money_unchanged = None
         if money:
             try:
-                job_money = money[0].text
+                job_money = money
                 job_money_unchanged = job_money
                 job_money = job_money.replace(',', '')
                 job_money = job_money.replace('$', '')
