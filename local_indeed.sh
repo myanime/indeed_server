@@ -4,7 +4,8 @@
 #COUNTRY='au'
 #COUNTRY='sg'
 #COUNTRY='canada'
-COUNTRY='usa'
+#COUNTRY='usa'
+COUNTRY="$(cut -d '_' -f3 <<<"$PWD")"
 PROJECT_DIR='/home/myanime/indeed_server_'$COUNTRY
 AWS_KEY="/home/myanime/.ssh/aws_schlupfi.pem"
 cd $PROJECT_DIR/static/
