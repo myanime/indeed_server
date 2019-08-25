@@ -17,8 +17,11 @@ sleep 5
 echo Starting_Scrapy
 cd $PROJECT_DIR/
 source ~/indeedenv/bin/activate
+if [ "$COUNTRY" = 'usa' ]
+then
 rm /home/myanime/indeed_server_usa/static/output/may.csv
 touch /home/myanime/indeed_server_usa/static/output/may.csv
+fi
 scrapy crawl indeed_scraper -o $PROJECT_DIR/static/output/may.csv
 echo may > $PROJECT_DIR/static/output/filename
 sleep 10
