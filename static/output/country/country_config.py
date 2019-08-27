@@ -4,4 +4,6 @@ import os
 # COUNTRY = 'canada'
 # COUNTRY = 'usa'
 path = str(os.getcwd())
-COUNTRY = path.split('indeed_server_')[1]
+country = path.split('indeed_server_')[1]
+country = country.split('/')[0]
+COUNTRY = country
