@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from indeed.items import IndeedItem
 
 from static.output.country.country_config import COUNTRY
-from generate_joblist import us_jobs, canada_jobs, singapore_jobs
+from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs
 
 
 class MainScraper(scrapy.Spider):
@@ -23,6 +23,8 @@ class MainScraper(scrapy.Spider):
         start_urls = canada_jobs()
     if COUNTRY == 'sg':
         start_urls = singapore_jobs()
+    if COUNTRY == 'uk':
+        start_urls = uk_jobs()
 
     def get_email_and_telephone(self, text):
         emails = []
@@ -164,6 +166,8 @@ class MainScraper(scrapy.Spider):
                 job_money_unchanged = job_money
                 job_money = job_money.replace(',', '')
                 job_money = job_money.replace('$', '')
+                if COUNTRY == 'uk':
+                    job_money = job_money.replace('£', '')
                 if re.search(r' a year', job_money):
                     job_money = job_money.split(' a year')[0]
                     salary_description = 'a year'
@@ -233,6 +237,8 @@ class MainScraper(scrapy.Spider):
                 company_revenue_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd::text')[
                     link_order].extract()
                 re_money = r'\$'
+                if COUNTRY == 'uk':
+                    re_money = r'\£'
                 if re.search(re_money, company_revenue_indeed):
                     pass
                 else:
