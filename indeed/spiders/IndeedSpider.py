@@ -111,8 +111,24 @@ class MainScraper(scrapy.Spider):
             indeed_text = indeed_text.find('div', class_='jobsearch-jobDescriptionText').get_text()
         except Exception as e:
             indeed_text = ''
-
+        try:
+            image = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-image"]').extract_first(), 'lxml')
+            image_src = image.find('img')['src']
+        except Exception:
+            image_src = ''
+        try:
+            # print(response.url)
+            company_description = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-description"]').extract_first(), 'lxml').get_text()
+        except:
+            company_description = ''
+        try:
+            company_link = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-companyLink"]').extract_first(), 'lxml').find('a')['href']
+        except:
+            company_link = ''
         item['original_html'] = indeed_text
+        item['image_link'] = image_src
+        item['company_description_indeed'] = company_description
+        item['company_links_indeed'] = company_link
         # print("*************************************************")
         # print("*************************************************")
         # print("*************************************************")

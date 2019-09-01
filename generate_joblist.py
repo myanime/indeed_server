@@ -5,6 +5,7 @@ canadian_states = ['Ontario', 'Quebec', 'British', 'Columbia', 'Alberta', 'Manit
 
 singapore_states = ['singapore']
 def generate_jobs(states, base_url):
+    # return ['https://au.indeed.com/jobs?q=victoria&l=VIC&vjk=2bc206cf12917926']
     jobs=[]
     for state in states:
           for i in range(1,101):
