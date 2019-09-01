@@ -12,7 +12,8 @@ if COUNTRY == 'canada':
     OUTPUT_NAME = './transfer/V1ca_' + todays_date + ".csv"
 if COUNTRY == 'sg':
     OUTPUT_NAME = './transfer/V1sg_' + todays_date + ".csv"
-
+if COUNTRY == 'uk':
+    OUTPUT_NAME = './transfer/V1uk_' + todays_date + ".csv"
 
 
 months_output = 'may.csv'
