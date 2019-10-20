@@ -96,7 +96,6 @@ class MainScraper(scrapy.Spider):
         item['original_link_telephones'] = phone
         item['original_link_emails'] = email
 
-        item['original_plain_text'] = ''  # Adding the company text takes up too much space
         item['original_link_clean'] = company_url
 
         yield item
@@ -147,8 +146,6 @@ class MainScraper(scrapy.Spider):
         except:
             item['original_link_telephones'] = ''
             item['original_link_emails'] = ''
-
-            item['original_plain_text'] = ''
             item['original_link_clean'] = ''
 
             yield item

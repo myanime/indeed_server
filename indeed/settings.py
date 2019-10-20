@@ -36,7 +36,6 @@ EXPORT_FIELDS = [
 'logo_image_link',
 'job_date',
 'indeed_date',
-'original_plain_text',
 'original_html',
 'company_description_indeed',
 'company_revenue_indeed',

@@ -38,5 +38,4 @@ class IndeedItem(scrapy.Item):
     company_links_indeed = scrapy.Field()
 
     jobNumber = scrapy.Field()
-    original_plain_text = scrapy.Field()
     original_html = scrapy.Field()
