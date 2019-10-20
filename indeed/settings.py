@@ -36,7 +36,7 @@ EXPORT_FIELDS = [
 'image_src_link',
 'image_src_link_path',
 'image_src_link_file',
-'image_link',
+'logo_image_link',
 'job_date',
 'indeed_date',
 'original_plain_text',

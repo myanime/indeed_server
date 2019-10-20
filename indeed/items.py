@@ -14,7 +14,7 @@ class IndeedItem(scrapy.Item):
     job_company = scrapy.Field()
     job_money = scrapy.Field()
     job_date = scrapy.Field()
-    image_link = scrapy.Field()
+    logo_image_link = scrapy.Field()
     image_src_link = scrapy.Field()
     job_title = scrapy.Field()
     original_link = scrapy.Field()

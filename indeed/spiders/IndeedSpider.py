@@ -10,21 +10,25 @@ from bs4 import BeautifulSoup
 from indeed.items import IndeedItem
 
 from static.output.country.country_config import COUNTRY
-from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs
+from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs, debug_jobs
 
+DEBUG = False
 
 class MainScraper(scrapy.Spider):
     name = "indeed_scraper"
-    if COUNTRY == 'au':
-        start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
-    if COUNTRY == 'usa':
-        start_urls = us_jobs()
-    if COUNTRY == 'canada':
-        start_urls = canada_jobs()
-    if COUNTRY == 'sg':
-        start_urls = singapore_jobs()
-    if COUNTRY == 'uk':
-        start_urls = uk_jobs()
+    if DEBUG:
+        start_urls = debug_jobs()
+    else:
+        if COUNTRY == 'au':
+            start_urls = [line.rstrip("\n") for line in open('./static/indeedurls')]
+        if COUNTRY == 'usa':
+            start_urls = us_jobs()
+        if COUNTRY == 'canada':
+            start_urls = canada_jobs()
+        if COUNTRY == 'sg':
+            start_urls = singapore_jobs()
+        if COUNTRY == 'uk':
+            start_urls = uk_jobs()
 
     def get_email_and_telephone(self, text):
         emails = []
@@ -119,10 +123,11 @@ class MainScraper(scrapy.Spider):
             company_description = ''
         try:
             company_link = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-companyLink"]').extract_first(), 'lxml').find('a')['href']
+            company_link = company_link.split('?')[0]
         except:
             company_link = ''
         item['original_html'] = indeed_text
-        item['image_link'] = image_src
+        item['logo_image_link'] = image_src
         item['company_description_indeed'] = company_description
         item['company_links_indeed'] = company_link
         # print("*************************************************")
@@ -332,7 +337,6 @@ class MainScraper(scrapy.Spider):
             money = RCFind(soup, 'span', class_='salary')
             job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
 
-            item['jobNumber'] = None
             item['job_title'] = job_title
             item['job_description'] = job_description
             item['job_location'] = job_location
@@ -345,7 +349,7 @@ class MainScraper(scrapy.Spider):
             item['job_money_unchanged'] = job_money_unchanged
             item['range_lower'] = range_lower
             item['salary_description'] = salary_description
-            item['image_link'] = None
+            item['logo_image_link'] = None
             request = scrapy.Request(full_link, callback=self.parse_indeed_url)
             request.meta['item'] = item
 
