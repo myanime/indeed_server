@@ -100,6 +100,15 @@ class MainScraper(scrapy.Spider):
 
         yield item
 
+    def parse_company_url(self, response):
+        item = response.meta['item']
+        try:
+            ci = BeautifulSoup(response.xpath('//*[@class="cmp-ReviewAndRatingsStory-rating"]').extract_first(), 'lxml')
+            print("####################", ci.get_text())
+        except:
+            pass
+        yield item
+
     def parse_indeed_url(self, response):
 
         item = response.meta['item']
@@ -323,8 +332,20 @@ class MainScraper(scrapy.Spider):
             item['range_lower'] = range_lower
             item['salary_description'] = salary_description
             item['logo_image_link'] = None
+
             request = scrapy.Request(full_link, callback=self.parse_indeed_url)
             request.meta['item'] = item
+
+            try:
+                company_href = soup.find('a',{'data-tn-element':"companyName"}).attrs['href']
+            except AttributeError:
+                company_href = None
+
+            request2 =None
+            if company_href:
+                company_link = '{}://{}{}'.format(base_url.scheme, base_url.netloc, company_href)
+                request2 = scrapy.Request(company_link, callback=self.parse_company_url)
+                request2.meta['item'] = item
 
             print("#########################################")
             print("#################JobAdd##################")
@@ -339,7 +360,11 @@ class MainScraper(scrapy.Spider):
             print('salary_description: ', salary_description)
             print('full_link: ', full_link)
             print("#########################################")
-            yield request
+            requests = [request]
+            if request2:
+                requests.append(request2)
+            for request in requests:
+                yield request
 
         with open('duplicate_list.txt', 'a') as file:
             for i in list(old_jobs):
