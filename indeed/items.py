@@ -15,7 +15,6 @@ class IndeedItem(scrapy.Item):
     job_money = scrapy.Field()
     job_date = scrapy.Field()
     logo_image_link = scrapy.Field()
-    image_src_link = scrapy.Field()
     job_title = scrapy.Field()
     original_link = scrapy.Field()
     original_link_clean = scrapy.Field()
@@ -37,9 +36,6 @@ class IndeedItem(scrapy.Item):
     company_employees_indeed = scrapy.Field()
     company_industry_indeed = scrapy.Field()
     company_links_indeed = scrapy.Field()
-
-    image_src_link_path = scrapy.Field()
-    image_src_link_file = scrapy.Field()
 
     jobNumber = scrapy.Field()
     original_plain_text = scrapy.Field()

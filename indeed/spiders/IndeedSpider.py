@@ -188,31 +188,9 @@ class MainScraper(scrapy.Spider):
 
     def parse_image_src(self, response):
         item = response.meta['item']
-        try:
-            image_src_link = response.css('div#cmp-header-logo img').xpath("@src").extract()
-        except:
-            image_src_link = None
 
-        image_src_link_file = None
-        image_src_link_path = None
-        if image_src_link != None:
-            try:
-                image_src_link_s = str(image_src_link)
-                image_src_link_split = image_src_link_s.rsplit('/', 1)
-                image_src_link_path = image_src_link_split[0].replace("[u'", "")
-                image_src_link_path = image_src_link_path.replace("[]", "")
-                image_src_link_file = image_src_link_split[1].replace("']", "")
-            except:
-                pass
-
-        item['image_src_link'] = image_src_link
-        item['image_src_link_file'] = image_src_link_file
-        item['image_src_link_path'] = image_src_link_path
-
-        company_description_indeed = None
         company_revenue_indeed = ""
         company_employees_indeed = ""
-        company_industry_indeed = None
         company_links_indeed = None
 
         try:
@@ -224,7 +202,6 @@ class MainScraper(scrapy.Spider):
         x = 0
         link_order = 0
         while x < 4:
-            company_revenue_indeed_title = ''
             try:
                 company_revenue_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[
                     link_order].extract()
@@ -251,7 +228,6 @@ class MainScraper(scrapy.Spider):
         link_order = 0
         if skip_employees == False:
             while x < 4:
-                company_employees_indeed_title = ''
                 try:
                     company_employees_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[
                         link_order].extract()
