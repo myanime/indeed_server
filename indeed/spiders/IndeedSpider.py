@@ -103,12 +103,6 @@ class MainScraper(scrapy.Spider):
         unclean_url = response.url
         item['original_link'] = unclean_url
         try:
-            urlhash = int(hashlib.sha1(unclean_url.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
-        except:
-            urlhash = randint(1, 10000000)
-        item['jobNumber'] = urlhash
-
-        try:
             indeed_text = BeautifulSoup(response.xpath('//*[@id="jobDescriptionText"]').extract_first(), 'lxml')
             indeed_text = indeed_text.find('div', class_='jobsearch-jobDescriptionText').get_text()
         except Exception as e:
@@ -295,6 +289,12 @@ class MainScraper(scrapy.Spider):
 
         return item
 
+    def generate_hash(self, title_href):
+        try:
+            return int(hashlib.sha1(title_href.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
+        except:
+            return randint(1, 10000000)
+
     def parse(self, response):
         def RCFind(soup, element, class_=None, href=False):
             elements = soup.find(element, class_=class_)
@@ -303,11 +303,24 @@ class MainScraper(scrapy.Spider):
                     return elements.attrs['href']
                 return elements.get_text(strip=True)
 
+        old_jobs = set(line.rstrip("\n") for line in open('duplicate_list.txt'))
+        import os
+        os.remove('duplicate_list.txt')
+
         job_add_scrapy = response.xpath('//*[@data-tn-component="organicJob"]')
         for add in job_add_scrapy:
+            item = IndeedItem()
             soup = BeautifulSoup(add.extract(), 'lxml')
 
             title_href = RCFind(soup, 'a', class_='jobtitle', href=True)
+            job_number = self.generate_hash(title_href)
+            if str(job_number) in old_jobs:
+                continue
+            else:
+                old_jobs.add(job_number)
+
+            item['jobNumber'] = job_number
+
             base_url = urlsplit(response.url)
             full_link = '{}://{}{}'.format(base_url.scheme, base_url.netloc, title_href)
 
@@ -319,7 +332,6 @@ class MainScraper(scrapy.Spider):
             money = RCFind(soup, 'span', class_='salary')
             job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
 
-            item = IndeedItem()
             item['jobNumber'] = None
             item['job_title'] = job_title
             item['job_description'] = job_description
@@ -351,3 +363,8 @@ class MainScraper(scrapy.Spider):
             print('full_link: ', full_link)
             print("#########################################")
             yield request
+
+        with open('duplicate_list.txt', 'a') as file:
+            for i in list(old_jobs):
+                file.write(str(i))
+                file.write('\n')
