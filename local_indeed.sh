@@ -32,3 +32,5 @@ cd $PROJECT_DIR/static/output/transfer
 gzip $PROJECT_DIR/static/output/transfer/*.*
 scp -i $AWS_KEY -r $PROJECT_DIR/static/output/transfer/* ubuntu@52.59.254.43:./countries/$COUNTRY
 rm $PROJECT_DIR/static/output/transfer/*
+cd $PROJECT_DIR/static/
+date >> ./runcounter
