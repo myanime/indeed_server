@@ -12,7 +12,7 @@ from indeed.items import IndeedItem
 from static.output.country.country_config import COUNTRY
 from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs, debug_jobs
 
-DEBUG = True
+DEBUG = False
 
 
 class MainScraper(scrapy.Spider):
