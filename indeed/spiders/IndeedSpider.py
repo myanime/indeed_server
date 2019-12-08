@@ -12,7 +12,7 @@ from indeed.items import IndeedItem
 from static.output.country.country_config import COUNTRY
 from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs, debug_jobs
 
-DEBUG = False
+DEBUG = True
 
 
 class MainScraper(scrapy.Spider):
@@ -271,9 +271,11 @@ class MainScraper(scrapy.Spider):
             return ''
 
     def parse(self, response):
-
-        old_jobs = set(line.rstrip("\n") for line in open('duplicate_list.txt'))
         import os
+        if not os.path.exists('duplicate_list.txt'):
+            with open('duplicate_list.txt', 'w'):
+                pass
+        old_jobs = set(line.rstrip("\n") for line in open('duplicate_list.txt'))
         if not DEBUG:
             os.remove('duplicate_list.txt')
 
