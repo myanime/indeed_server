@@ -119,4 +119,6 @@ def uk_jobs():
     return generate_jobs(uk_districts, 'https://www.indeed.co.uk')
 
 def debug_jobs():
+    # return ['https://au.indeed.com/jobs?q=Theatre+Technicians+Expression+of+Interest+-+Victoria+%28including+Albury%29&l=VIC']
+    # return ['https://au.indeed.com/jobs?q=Specialist+Strategy+%26+Planning+bhp&l=VIC']
     return ['https://au.indeed.com/jobs?q=victoria&l=VIC&vjk=2bc206cf12917926']

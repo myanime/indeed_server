@@ -14,6 +14,7 @@ from generate_joblist import us_jobs, canada_jobs, singapore_jobs, uk_jobs, debu
 
 DEBUG = False
 
+
 class MainScraper(scrapy.Spider):
     name = "indeed_scraper"
     if DEBUG:
@@ -105,6 +106,38 @@ class MainScraper(scrapy.Spider):
         try:
             ci = BeautifulSoup(response.xpath('//*[@class="cmp-ReviewAndRatingsStory-rating"]').extract_first(), 'lxml')
             print("####################", ci.get_text())
+
+            try:
+                # item['ceo'] =
+                # item['ceo_reviews'] =
+                # item['ceo_image_link'] =
+                soup = BeautifulSoup(response.xpath('//*[@class="cmp-CeoWidgetWithRating-percent"]').extract_first(),
+                                     'lxml')
+                item['ceo_rating'] = soup.find('div').get_text(strip=True)
+            except:
+                pass
+
+            hq_candidates = response.xpath('//*[@class="cmp-AboutMetadata-itemInner"]').getall()
+            for hq_candidate in hq_candidates:
+                if 'Headquarters' in hq_candidate:
+                    hq = hq_candidate.split('cmp-AboutMetadata-itemCotent">')[1].split('</div>')[0]
+                    item['headquarters'] = hq
+
+            links = response.xpath('//*[@class="cmp-CompanyLink"]').getall()
+            for link in links:
+                link = BeautifulSoup(link, 'lxml').find('a').attrs['href']
+                if 'https://www.facebook' in link:
+                    continue
+                if 'https://www.instagram' in link:
+                    item['instagram_url'] = link
+                if 'https://twitter' in link:
+                    continue
+                if 'https://www.linkedin' in link:
+                    item['linkedin_url'] = link
+                if 'https://www.youtube' in link:
+                    continue
+                else:
+                    item['company_website'] = link
         except:
             pass
         yield item
@@ -120,17 +153,28 @@ class MainScraper(scrapy.Spider):
         except Exception as e:
             indeed_text = ''
         try:
+            job_type_soup = BeautifulSoup(
+                response.xpath('//*[@class="jobsearch-JobMetadataHeader-iconLabel"]').getall()[1], 'lxml')
+            if job_type_soup:
+                job_type = job_type_soup.find('span').get_text(strip=True)
+                item['job_type'] = job_type
+        except:
+            item['job_type'] = ''
+        try:
             image = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-image"]').extract_first(), 'lxml')
             image_src = image.find('img')['src']
         except Exception:
             image_src = ''
         try:
             # print(response.url)
-            company_description = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-description"]').extract_first(), 'lxml').get_text()
+            company_description = BeautifulSoup(
+                response.xpath('//*[@class="jobsearch-CompanyAvatar-description"]').extract_first(), 'lxml').get_text()
         except:
             company_description = ''
         try:
-            company_link = BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-companyLink"]').extract_first(), 'lxml').find('a')['href']
+            company_link = \
+            BeautifulSoup(response.xpath('//*[@class="jobsearch-CompanyAvatar-companyLink"]').extract_first(),
+                          'lxml').find('a')['href']
             company_link = company_link.split('?')[0]
         except:
             company_link = ''
@@ -192,116 +236,55 @@ class MainScraper(scrapy.Spider):
                 job_money = None
         return job_money, range_lower, range_upper, salary_description, job_money_unchanged
 
-    def parse_image_src(self, response):
-        item = response.meta['item']
-
-        company_revenue_indeed = ""
-        company_employees_indeed = ""
-        company_links_indeed = None
-
-        try:
-            company_description_indeed = response.css('span#cmp-short-description::text')[0].extract()
-        except:
-            company_description_indeed = None
-
-        skip_employees = False
-        x = 0
-        link_order = 0
-        while x < 4:
-            try:
-                company_revenue_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[
-                    link_order].extract()
-            except:
-                company_revenue_indeed = None
-                break
-            re_title_text = r'Revenue'
-            if re.search(re_title_text, company_revenue_indeed_title):
-                company_revenue_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd::text')[
-                    link_order].extract()
-                re_money = r'\$'
-                if COUNTRY == 'uk':
-                    re_money = r'\£'
-                if re.search(re_money, company_revenue_indeed):
-                    pass
-                else:
-                    company_revenue_indeed = None
-                    skip_employees = True
-                break
-            link_order = link_order + 1
-            company_revenue_indeed = None
-
-        x = 0
-        link_order = 0
-        if skip_employees == False:
-            while x < 4:
-                try:
-                    company_employees_indeed_title = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dt::text')[
-                        link_order].extract()
-                except:
-                    company_employees_indeed = None
-                    break
-                re_title_text = r'Employees'
-                if re.search(re_title_text, company_employees_indeed_title):
-                    company_employees_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd::text')[
-                        link_order].extract()
-                    re_numb = r'[ABCDEFGHIJKLMNPQRSUVWXYZabcdefghijklmnpqrsuvwxzy]'
-                    if re.search(re_numb, company_employees_indeed):
-                        company_employees_indeed = None
-                    break
-                link_order = link_order + 1
-                company_employees_indeed = None
-
-        company_industry_indeed = response.css(
-            'dl.cmp-dl-list-big.cmp-sidebar-section dd ul.cmp-plain-list li a::text').extract_first()
-        try:
-            company_links_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd a').xpath('@href')[
-                2].extract()
-        except:
-            try:
-                company_links_indeed = response.css('dl.cmp-dl-list-big.cmp-sidebar-section dd a').xpath('@href')[
-                    1].extract()
-            except:
-                pass
-        try:
-            company_employees_indeed = company_employees_indeed.replace("+", '')
-            company_employees_indeed = company_employees_indeed.replace(",", '')
-        except:
-            pass
-
-        item['company_description_indeed'] = company_description_indeed
-        item['company_revenue_indeed'] = company_revenue_indeed
-        item['company_employees_indeed'] = company_employees_indeed
-        item['company_industry_indeed'] = company_industry_indeed
-        item['company_links_indeed'] = company_links_indeed
-
-        return item
-
     def generate_hash(self, title_href):
         try:
             return int(hashlib.sha1(title_href.encode('utf-8')).hexdigest(), 16) % (10 ** 8)
         except:
             return randint(1, 10000000)
 
+    def parse_rating_page(self, response):
+        item = response.meta['item']
+        try:
+            soup = BeautifulSoup(response.xpath('//*[@id="cmp-reviews-header-container"]').extract_first(), 'lxml')
+            item['worklife'] = self.RCFindAttrSpan(soup, 'a', {'data-tn-element': "review-filter-wlbalance"})
+            item['salary'] = self.RCFindAttrSpan(soup, 'a', {'data-tn-element': "review-filter-paybenefits"})
+            item['job_security'] = self.RCFindAttrSpan(soup, 'a', {'data-tn-element': "review-filter-jobsecadv"})
+            item['management'] = self.RCFindAttrSpan(soup, 'a', {'data-tn-element': "review-filter-mgmt"})
+            item['culture'] = self.RCFindAttrSpan(soup, 'a', {'data-tn-element': "review-filter-culture"})
+        except:
+            pass
+        yield item
+
+    @classmethod
+    def RCFind(cls, soup, element, class_=None, href=False):
+        elements = soup.find(element, class_=class_)
+        if elements:
+            if href:
+                return elements.attrs['href']
+            return elements.get_text(strip=True)
+
+    @classmethod
+    def RCFindAttrSpan(cls, soup, element, attr):
+        try:
+            return soup.find(element, attr).find('span').get_text(strip=True)
+        except:
+            return ''
+
     def parse(self, response):
-        def RCFind(soup, element, class_=None, href=False):
-            elements = soup.find(element, class_=class_)
-            if elements:
-                if href:
-                    return elements.attrs['href']
-                return elements.get_text(strip=True)
 
         old_jobs = set(line.rstrip("\n") for line in open('duplicate_list.txt'))
         import os
-        os.remove('duplicate_list.txt')
+        if not DEBUG:
+            os.remove('duplicate_list.txt')
 
         job_add_scrapy = response.xpath('//*[@data-tn-component="organicJob"]')
         for add in job_add_scrapy:
             item = IndeedItem()
             soup = BeautifulSoup(add.extract(), 'lxml')
 
-            title_href = RCFind(soup, 'a', class_='jobtitle', href=True)
+            title_href = self.RCFind(soup, 'a', class_='jobtitle', href=True)
             job_number = self.generate_hash(title_href)
-            if str(job_number) in old_jobs:
+            if not DEBUG and str(job_number) in old_jobs:
                 continue
             else:
                 old_jobs.add(job_number)
@@ -311,14 +294,16 @@ class MainScraper(scrapy.Spider):
             base_url = urlsplit(response.url)
             full_link = '{}://{}{}'.format(base_url.scheme, base_url.netloc, title_href)
 
-            job_company = RCFind(soup, 'span', class_='company')
-            job_title = RCFind(soup, 'a', class_='jobtitle')
-            job_description = RCFind(soup, 'div', class_='summary')
-            job_date = RCFind(soup, 'span', class_='date')
-            job_location = RCFind(soup, 'span', class_='location')
-            money = RCFind(soup, 'span', class_='salary')
+            job_company = self.RCFind(soup, 'span', class_='company')
+            job_title = self.RCFind(soup, 'a', class_='jobtitle')
+            job_description = self.RCFind(soup, 'div', class_='summary')
+            job_date = self.RCFind(soup, 'span', class_='date')
+            job_location = self.RCFind(soup, 'span', class_='location')
+            money = self.RCFind(soup, 'span', class_='salary')
+            rating = self.RCFind(soup, 'span', class_='ratingsContent')
             job_money, range_lower, range_upper, salary_description, job_money_unchanged = self.get_money(money)
 
+            item['country_id'] = COUNTRY
             item['job_title'] = job_title
             item['job_description'] = job_description
             item['job_location'] = job_location
@@ -332,20 +317,29 @@ class MainScraper(scrapy.Spider):
             item['range_lower'] = range_lower
             item['salary_description'] = salary_description
             item['logo_image_link'] = None
+            item['review_total'] = rating
 
             request = scrapy.Request(full_link, callback=self.parse_indeed_url)
             request.meta['item'] = item
 
             try:
-                company_href = soup.find('a',{'data-tn-element':"companyName"}).attrs['href']
+                company_href = soup.find('a', {'data-tn-element': "companyName"}).attrs['href']
             except AttributeError:
                 company_href = None
 
-            request2 =None
+            request2 = None
             if company_href:
                 company_link = '{}://{}{}'.format(base_url.scheme, base_url.netloc, company_href)
                 request2 = scrapy.Request(company_link, callback=self.parse_company_url)
                 request2.meta['item'] = item
+
+            rating_html = self.RCFind(soup, 'a', class_='ratingNumber', href=True)
+
+            request3 = None
+            if rating_html:
+                rating_html = '{}://{}{}'.format(base_url.scheme, base_url.netloc, rating_html)
+                request3 = scrapy.Request(rating_html, callback=self.parse_rating_page)
+                request3.meta['item'] = item
 
             print("#########################################")
             print("#################JobAdd##################")
@@ -363,6 +357,8 @@ class MainScraper(scrapy.Spider):
             requests = [request]
             if request2:
                 requests.append(request2)
+            if request3:
+                requests.append(request3)
             for request in requests:
                 yield request
 
